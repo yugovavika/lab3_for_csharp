@@ -8,227 +8,262 @@ namespace lab3
 {
     public class MatrixTasks
     {
-        private static int _instanceCount;
-
-        static MatrixTasks()
-        {
-            _instanceCount = 0;
-        }
+        private double[,] _data;
 
         public MatrixTasks()
         {
-            _instanceCount++;
+            _data = new double[1, 1];
         }
 
-        public static int InstanceCount
+        public MatrixTasks(int rows, int columns)
         {
-            get { return _instanceCount; }
+            if (rows < 1 || columns < 1)
+            {
+                throw new ArgumentException(
+                    "Размеры должны быть положительными.");
+            }
+
+            _data = new double[rows, columns];
+
+            int diagonal = 0;
+            int row = 0;
+            int column = 0;
+
+            while (diagonal < rows + columns - 1)
+            {
+                row = 0;
+
+                while (row < rows)
+                {
+                    column = diagonal - row;
+
+                    if (column >= 0 && column < columns)
+                    {
+                        _data[row, column] = Checked.ReadInt(
+                            $"Элемент [{row},{column}]: ");
+                    }
+
+                    row++;
+                }
+
+                diagonal++;
+            }
+        }
+
+        public MatrixTasks(int size, bool randomMatrix)
+        {
+            if (size < 1)
+            {
+                throw new ArgumentException(
+                    "Размер должен быть положительным.");
+            }
+
+            _data = new double[size, size];
+
+            int row = 0;
+            int column = 0;
+
+            if (randomMatrix)
+            {
+                Random generator = new Random();
+
+                while (row < size)
+                {
+                    column = 0;
+
+                    while (column < size)
+                    {
+                        if (row + column < size - 1)
+                        {
+                            _data[row, column] =
+                                0.51 + generator.NextDouble() * 0.49;
+                        }
+                        else
+                        {
+                            _data[row, column] =
+                                generator.NextDouble() * 0.5;
+                        }
+
+                        _data[row, column] = Math.Round(
+                            _data[row, column], 2);
+
+                        column++;
+                    }
+
+                    row++;
+                }
+            }
+            else
+            {
+                while (row < size)
+                {
+                    column = 0;
+
+                    while (column < size)
+                    {
+                        if (column <= row)
+                        {
+                            int diagonal = row - column;
+                            int length = size - diagonal;
+
+                            if (diagonal % 2 == 0)
+                            {
+                                _data[row, column] = column + 1;
+                            }
+                            else
+                            {
+                                _data[row, column] =
+                                    length - column;
+                            }
+                        }
+
+                        column++;
+                    }
+
+                    row++;
+                }
+            }
+        }
+
+        public override string ToString()
+        {
+            string result = string.Empty;
+            int row = 0;
+            int column = 0;
+
+            while (row < _data.GetLength(0))
+            {
+                column = 0;
+
+                while (column < _data.GetLength(1))
+                {
+                    result += string.Format(
+                        "{0,6}", _data[row, column]);
+                    column++;
+                }
+
+                result += Environment.NewLine;
+                row++;
+            }
+
+            return result;
         }
 
         public void RunTask1()
         {
-            int n1 = Checked.ReadInt("Введите " +
-                "количество строк n для 1-й матрицы: ", 1, 20);
-            int m1 = Checked.ReadInt("Введите " +
-                "количество столбцов m для 1-й " +
-                "матрицы: ", 1, 20);
+            int rows = Checked.ReadInt(
+                "Количество строк первой матрицы: ", 1, 20);
+            int columns = Checked.ReadInt(
+                "Количество столбцов первой матрицы: ", 1, 20);
 
-            int[,] arr1 = new int[n1, m1];
-            Console.WriteLine($"\nЗаполнение ПЕРВОГО " +
-                $"массива ({n1}x{m1}) по диагоналям:");
+            MatrixTasks first = new MatrixTasks(rows, columns);
 
-            int sumIdx = 0;
-            while (sumIdx <= (n1 - 1) + (m1 - 1))
-            {
-                for (int i = 0; i < n1; i++)
-                {
-                    int j = sumIdx - i;
-                    if (j >= 0 && j < m1)
-                    {
-                        arr1[i, j] = Checked.ReadInt($"Элем" +
-                            $"ент [{i},{j}]: ");
-                    }
-                }
-                sumIdx++;
-            }
-            Console.WriteLine("\nПервый массив:");
-            PrintArray(arr1);
+            Console.WriteLine("\nПервая матрица:");
+            Console.WriteLine(first);
 
-            int n2 = Checked.ReadInt("\nВведите размерность" +
-                " n для 2-й матрицы (n x n): ", 1, 20);
-            double[,] arr2 = new double[n2, n2];
-            Random rnd = new Random();
+            int size = Checked.ReadInt(
+                "\nРазмер второй матрицы n x n: ", 1, 20);
 
-            for (int i = 0; i < n2; i++)
-            {
-                for (int j = 0; j < n2; j++)
-                {
-                    if (i + j < n2 - 1)
-                    {
-                        arr2[i, j] = Math.Round(0.51 +
-                            rnd.NextDouble() * 0.49, 2);
-                    }
-                    else
-                    {
-                        arr2[i, j] = Math.Round(rnd.
-                            NextDouble() * 0.5, 2);
-                    }
-                }
-            }
-            Console.WriteLine("\nВторой массив " +
-                "(случайные числа):");
-            PrintDoubleArray(arr2);
+            MatrixTasks second = new MatrixTasks(size, true);
 
-            int n3 = Checked.ReadInt("\nВведите " +
-                "размерность n для 3-й матрицы: ",1,20);
+            Console.WriteLine("\nВторая матрица:");
+            Console.WriteLine(second);
 
-            int[,] arr3 = new int[n3, n3];
+            size = Checked.ReadInt(
+                "\nРазмер третьей матрицы n x n: ", 1, 20);
 
-            int row;
-            int column;
-            int diagonal;
-            int length;
-            int value;
-            int position;
+            MatrixTasks third = new MatrixTasks(size, false);
 
-            for (row = 0; row < n3; row++)
-            {
-                for (column = 0; column < n3; column++)
-                {
-                    arr3[row, column] = 0;
-                }
-            }
-
-            for (diagonal = 0; diagonal < n3; diagonal++)
-            {
-                length = n3 - diagonal;
-
-                if (diagonal == 0)
-                {
-                    for (position = 0; position < 
-                        length; position++)
-                    {
-                        arr3[position, position] = position + 1;
-                    }
-                }
-                else
-                {
-                    if (diagonal % 2 == 1)
-                    {
-                        value = length;
-
-                        for (position = 0; position < 
-                            length; position++)
-                        {
-                            row = diagonal + position;
-                            column = position;
-
-                            if (row < n3)
-                            {
-                                arr3[row, column] = value;
-                                value--;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        value = 1;
-
-                        for (position = 0; position < 
-                            length; position++)
-                        {
-                            row = diagonal + position;
-                            column = position;
-
-                            if (row < n3)
-                            {
-                                arr3[row, column] = value;
-                                value++;
-                            }
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine("\nТретий массив:");
-            PrintArray(arr3);
-        }
-
-        private void PrintDoubleArray(double[,] arr)
-        {
-            for (int i = 0; i < arr.GetLength(0); i++)
-            {
-                for (int j = 0; j < arr.GetLength(1); j++)
-                {
-                    Console.Write($"{arr[i, j],6:F2}");
-                }
-                Console.WriteLine();
-            }
+            Console.WriteLine("\nТретья матрица:");
+            Console.WriteLine(third);
         }
 
         public void RunTask2()
         {
-            int rows = Checked.ReadInt("Введите " +
-                "количество строк матрицы: ", 1, 20);
-            int cols = Checked.ReadInt("Введите " +
-                "количество столбцов матрицы: ", 1, 20);
+            int rows = Checked.ReadInt(
+                "Количество строк матрицы: ", 1, 20);
+            int columns = Checked.ReadInt(
+                "Количество столбцов матрицы: ", 1, 20);
 
-            int[,] arr = new int[rows, cols];
-            Console.WriteLine("\nЗаполнение массива:");
-            for (int i = 0; i < rows; i++)
+            int[,] data = new int[rows, columns];
+
+            int row = 0;
+            int column = 0;
+
+            Console.WriteLine("\nЗаполнение матрицы:");
+
+            while (row < rows)
             {
-                for (int j = 0; j < cols; j++)
+                column = 0;
+
+                while (column < columns)
                 {
-                    arr[i, j] = Checked.ReadInt($"Элемент " +
-                        $"[{i},{j}]: ");
+                    data[row, column] = Checked.ReadInt(
+                        $"Элемент [{row},{column}]: ");
+                    column++;
                 }
+
+                row++;
             }
 
-            Console.WriteLine("\nВаш массив:");
-            PrintArray(arr);
+            Console.WriteLine("\nВаша матрица:");
+            PrintArray(data);
 
             int totalSum = 0;
-            for (int i = 0; i < rows; i++)
+            row = 0;
+
+            while (row < rows)
             {
-                for (int j = 0; j < cols; j++)
+                column = 0;
+
+                while (column < columns)
                 {
-                    totalSum += arr[i, j];
+                    totalSum += data[row, column];
+                    column++;
                 }
+
+                row++;
             }
 
             int leftSum = 0;
+            int columnSum = 0;
+            int rightSum = 0;
             bool found = false;
+            column = 0;
 
-            for (int j = 0; j < cols - 1; j++)
+            while (column < columns - 1 && !found)
             {
-                int colSum = 0;
-                for (int i = 0; i < rows; i++)
+                columnSum = 0;
+                row = 0;
+
+                while (row < rows)
                 {
-                    colSum += arr[i, j];
+                    columnSum += data[row, column];
+                    row++;
                 }
 
-                int rightSum = totalSum - leftSum - colSum;
+                rightSum = totalSum - leftSum - columnSum;
 
                 if (leftSum > rightSum)
                 {
-                    Console.WriteLine($"\nНайден " +
-                        $"столбец {j}.");
-                    Console.WriteLine($"Сумма слева: " +
-                        $"{leftSum}");
-                    Console.WriteLine($"Сумма справа: " +
-                        $"{rightSum}");
+                    Console.WriteLine(
+                        $"\nПодходящий столбец: {column}.");
+                    Console.WriteLine($"Сумма слева: {leftSum}");
+                    Console.WriteLine($"Сумма справа: {rightSum}");
                     found = true;
-                    break;
+                }
+                else
+                {
+                    leftSum += columnSum;
                 }
 
-                leftSum += colSum;
+                column++;
             }
 
             if (!found)
             {
-                Console.WriteLine("\nТакого столбца нет " +
-                    "(ни один столбец не разбивает массив " +
-                    "так, чтобы слева сумма была больше).");
+                Console.WriteLine(
+                    "\nПодходящий столбец не найден.");
             }
         }
 
@@ -236,81 +271,81 @@ namespace lab3
         {
             Console.WriteLine("Выражение: A + (B - 3 * C^T)");
 
-            int n = Checked.ReadInt("Введите количество" +
-                " строк n (для матриц A и B): ", 1, 10);
-            int m = Checked.ReadInt("Введите количество " +
-                "столбцов m (для матриц A и B): ", 1, 10);
-            Console.WriteLine($"\nМатрицы A и B будут" +
-                $" размером {n}x{m}.");
-            Console.WriteLine($"Матрица C будет размером " +
-                $"{m}x{n} (чтобы после транспонирования " +
-                $"получилось {n}x{m}).");
+            int rows = Checked.ReadInt(
+                "Количество строк матриц A и B: ", 1, 10);
+            int columns = Checked.ReadInt(
+                "Количество столбцов матриц A и B: ", 1, 10);
 
-            int[,] dataA = new int[n, m];
-            Console.WriteLine($"\nЗаполнение матрицы A " +
-                $"({n}x{m}):");
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < m; j++)
-                {
-                    dataA[i, j] = Checked.ReadInt($"A" +
-                        $"[{i},{j}]: ");
-                }
-            }
+            int[,] dataA = new int[rows, columns];
+            int[,] dataB = new int[rows, columns];
+            int[,] dataC = new int[columns, rows];
 
-            int[,] dataB = new int[n, m];
-            Console.WriteLine($"\nЗаполнение матрицы B " +
-                $"({n}x{m}):");
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < m; j++)
-                {
-                    dataB[i, j] = Checked.ReadInt($"B" +
-                        $"[{i},{j}]: ");
-                }
-            }
+            ReadMatrix(dataA, "A");
+            ReadMatrix(dataB, "B");
+            ReadMatrix(dataC, "C");
 
-            int[,] dataC = new int[m, n];
-            Console.WriteLine($"\nЗаполнение матрицы C " +
-                $"({m}x{n}):");
-            for (int i = 0; i < m; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    dataC[i, j] = Checked.ReadInt($"C" +
-                        $"[{i},{j}]: ");
-                }
-            }
+            Matrix matrixA = new Matrix(dataA);
+            Matrix matrixB = new Matrix(dataB);
+            Matrix matrixC = new Matrix(dataC);
 
-            Matrix A = new Matrix(dataA);
-            Matrix B = new Matrix(dataB);
-            Matrix C = new Matrix(dataC);
-
-            Matrix CT = C.Transpose();
-            Matrix result = A + (B - 3 * CT);
+            Matrix transposed = matrixC.Transpose();
+            Matrix result = matrixA + (matrixB - 3 * transposed);
 
             Console.WriteLine("\nМатрица A:");
-            Console.WriteLine(A);
+            Console.WriteLine(matrixA);
+
             Console.WriteLine("Матрица B:");
-            Console.WriteLine(B);
+            Console.WriteLine(matrixB);
+
             Console.WriteLine("Матрица C:");
-            Console.WriteLine(C);
-            Console.WriteLine("Транспонированная матрица C" +
-                " (C^T):");
-            Console.WriteLine(CT);
-            Console.WriteLine("Результат A + (B - 3*C^T):");
+            Console.WriteLine(matrixC);
+
+            Console.WriteLine("Транспонированная матрица C:");
+            Console.WriteLine(transposed);
+
+            Console.WriteLine("Результат выражения:");
             Console.WriteLine(result);
         }
 
-        private void PrintArray(int[,] arr)
+        private void ReadMatrix(int[,] data, string name)
         {
-            for (int i = 0; i < arr.GetLength(0); i++)
+            int row = 0;
+            int column = 0;
+
+            Console.WriteLine($"\nЗаполнение матрицы {name}:");
+
+            while (row < data.GetLength(0))
             {
-                for (int j = 0; j < arr.GetLength(1); j++)
+                column = 0;
+
+                while (column < data.GetLength(1))
                 {
-                    Console.Write($"{arr[i, j],5}");
+                    data[row, column] = Checked.ReadInt(
+                        $"{name}[{row},{column}]: ");
+                    column++;
                 }
+
+                row++;
+            }
+        }
+
+        private void PrintArray(int[,] data)
+        {
+            int row = 0;
+            int column = 0;
+
+            while (row < data.GetLength(0))
+            {
+                column = 0;
+
+                while (column < data.GetLength(1))
+                {
+                    Console.Write($"{data[row, column],5}");
+                    column++;
+                }
+
                 Console.WriteLine();
+                row++;
             }
         }
     }

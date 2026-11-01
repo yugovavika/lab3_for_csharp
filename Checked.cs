@@ -18,19 +18,23 @@ namespace lab3
             {
                 Console.Write(prompt);
                 string? input = Console.ReadLine();
+
                 isParsed = int.TryParse(input, out result);
 
                 if (!isParsed)
                 {
-                    Console.WriteLine("Ошибка. " +
-                        "Введите целое число.");
+                    Console.WriteLine(
+                        "Ошибка. Введите целое число.");
                 }
             }
+
             return result;
         }
 
-        public static int ReadInt(string prompt, 
-            int min, int max)
+        public static int ReadInt(
+            string prompt,
+            int min,
+            int max)
         {
             int result = 0;
             bool isParsed = false;
@@ -39,21 +43,23 @@ namespace lab3
             {
                 Console.Write(prompt);
                 string? input = Console.ReadLine();
+
                 isParsed = int.TryParse(input, out result);
 
                 if (!isParsed)
                 {
-                    Console.WriteLine("Ошибка. " +
-                        "Введите целое число.");
+                    Console.WriteLine(
+                        "Ошибка. Введите целое число.");
                 }
                 else if (result < min || result > max)
                 {
                     isParsed = false;
-                    Console.WriteLine($"Ошибка. " +
-                        $"Число должно быть " +
-                        $"от {min} до {max}.");
+
+                    Console.WriteLine(
+                        $"Число должно быть от {min} до {max}.");
                 }
             }
+
             return result;
         }
     }

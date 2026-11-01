@@ -8,13 +8,36 @@ using System.Xml.Serialization;
 
 namespace lab3
 {
-    [Serializable]
     public struct Toy
     {
-        public string Name;
-        public double Price;
-        public int MinAge;
-        public int MaxAge;
+        private string _name;
+        private double _price;
+        private int _minAge;
+        private int _maxAge;
+
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        public double Price
+        {
+            get { return _price; }
+            set { _price = value; }
+        }
+
+        public int MinAge
+        {
+            get { return _minAge; }
+            set { _minAge = value; }
+        }
+
+        public int MaxAge
+        {
+            get { return _maxAge; }
+            set { _maxAge = value; }
+        }
     }
 
     public static class FileTasks
@@ -38,356 +61,529 @@ namespace lab3
             RunTask6();
             RunTask7();
             RunTask8();
-            Console.WriteLine($"Выполнено файловых операций: " +
-                $"{FileOpsCount}");
+
+            Console.WriteLine(
+                "Выполнено операций: " + _fileOpsCount);
         }
 
-        private static void FillBinaryFile(string fileName)
+        private static bool IsFileAvailable(string path)
         {
-            int choice = Checked.ReadInt("Заполнить файл 1 - " +
-                "случайными числами, 2 - вручную? ", 1, 2);
-
-            using (BinaryWriter writer = new BinaryWriter
-                (File.Create(fileName)))
+            try
             {
-                int i = 0;
+                using (FileStream stream = File.OpenRead(path))
+                {
+                    return true;
+                }
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка открытия файла.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+            }
 
-                if (choice == 1)
+            return false;
+        }
+
+        private static void FillBinaryFile(string path)
+        {
+            int count = Checked.ReadInt(
+                "Количество чисел: ", 1, 100);
+
+            int choice = Checked.ReadInt(
+                "Заполнить файл 1 - Вручную, 2 - Случайными числами? ", 1, 2);
+
+            Random random = new Random();
+
+            try
+            {
+                using (BinaryWriter writer = new BinaryWriter(
+                    File.Create(path)))
                 {
-                    Random rnd = new Random();
-                    int count = Checked.ReadInt("Сколько " +
-                        "случайных чисел сгенерировать? "
-                        , 1, 100);
-                    for (i = 0; i < count; i++)
+                    int index = 0;
+                    int number = 0;
+
+                    Console.WriteLine("Вводимые числа:");
+
+                    while (index < count)
                     {
-                        writer.Write(rnd.Next(10, 1000));
+                        if (choice == 1)
+                        {
+                            number = Checked.ReadInt(
+                                "Введите число: ",
+                                int.MinValue, int.MaxValue);
+                        }
+                        else
+                        {
+                            number = random.Next(10, 1000);
+                        }
+
+                        writer.Write(number);
+                        Console.WriteLine(number);
+                        index++;
                     }
                 }
-                else
-                {
-                    int count = Checked.ReadInt("Сколько " +
-                        "чисел вы хотите ввести? ", 1, 100);
-                    for (i = 0; i < count; i++)
-                    {
-                        int num = Checked.ReadInt($"Введите " +
-                            $"{i + 1}-е число: ");
-                        writer.Write(num);
-                    }
-                }
+            }
+            catch (IOException)
+            {
+                Console.WriteLine(
+                    "Ошибка при работе с файлом.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine(
+                    "Нет доступа к файлу.");
             }
         }
 
         public static void RunTask4()
         {
-            _fileOpsCount++;
-            string file1 = "input4.bin";
-            string file2 = "output4.bin";
+            string source = "input4.bin";
+            string result = "output4.bin";
 
-            FillBinaryFile(file1);
+            FillBinaryFile(source);
 
-            using (BinaryReader reader = new BinaryReader
-                (File.OpenRead(file1)))
-            using (BinaryWriter writer = new BinaryWriter
-                (File.Create(file2)))
+            if (!IsFileAvailable(source))
             {
-                while (reader.BaseStream.Position != 
-                    reader.BaseStream.Length)
+                return;
+            }
+
+            try
+            {
+                using (BinaryReader reader = new BinaryReader(
+                    File.OpenRead(source)))
+                using (BinaryWriter writer = new BinaryWriter(
+                    File.Create(result)))
                 {
-                    int num = reader.ReadInt32();
-
-                    int absNum = Math.Abs(num);
-
-                    if (absNum >= 10)
+                    while (reader.BaseStream.Position <
+                        reader.BaseStream.Length)
                     {
-                        string s = absNum.ToString();
-                        if (s[0] == s[s.Length - 1])
+                        int number = reader.ReadInt32();
+                        long absNumber = Math.Abs((long)number);
+                        string text = absNumber.ToString();
+
+                        if (absNumber >= 10 &&
+                            text[0] == text[text.Length - 1])
                         {
-                            writer.Write(num);
+                            writer.Write(number);
                         }
                     }
                 }
+
+                _fileOpsCount++;
+                Console.WriteLine(
+                    "Результат сохранён в output4.bin.");
             }
-            Console.WriteLine("Файл обработан. " +
-                "Результат записан в output4.bin");
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка обработки файла.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+            }
+        }
+
+        private static void SerializeToys(
+            string path, Toy[] toys)
+        {
+            try
+            {
+                XmlSerializer serializer =
+                    new XmlSerializer(typeof(Toy[]));
+
+                using (FileStream stream = File.Create(path))
+                {
+                    serializer.Serialize(stream, toys);
+                }
+
+                Console.WriteLine("Данные сохранены.");
+            }
+            catch (InvalidOperationException)
+            {
+                Console.WriteLine("Ошибка сериализации.");
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка записи XML-файла.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+            }
+        }
+
+        private static Toy[] DeserializeToys(string path)
+        {
+            Toy[] toys = new Toy[0];
+
+            try
+            {
+                XmlSerializer serializer =
+                    new XmlSerializer(typeof(Toy[]));
+
+                using (FileStream stream = File.OpenRead(path))
+                {
+                    toys = (Toy[])serializer.Deserialize
+                        (stream);
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                Console.WriteLine("Ошибка чтения XML.");
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка открытия XML-файла.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+            }
+
+            return toys;
         }
 
         public static void RunTask5()
         {
-            _fileOpsCount++;
-            string xmlFile = "toys.xml";
+            string path = "toys.xml";
 
-            int count = Checked.ReadInt("Сколько игрушек " +
-                "вы хотите добавить? ", 1, 20);
+            int count = Checked.ReadInt(
+                "Количество игрушек: ", 1, 20);
+
             Toy[] toys = new Toy[count];
+            int index = 0;
 
-            int i = 0;
-            for (i = 0; i < count; i++)
+            while (index < count)
             {
-                Console.WriteLine($"\nИгрушка №{i + 1}:");
-                string? name = "";
-                bool isValidName = false;
-                while (!isValidName)
+                Toy toy = new Toy();
+
+                Console.WriteLine("Игрушка " + (index + 1));
+                string name = "";
+
+                while (string.IsNullOrWhiteSpace(name))
                 {
                     Console.Write("Название: ");
-                    name = Console.ReadLine();
+                    name = Console.ReadLine() ?? "";
+
                     if (string.IsNullOrWhiteSpace(name))
                     {
-                        Console.WriteLine("Ошибка. Название " +
-                            "не может быть пустым.");
-                    }
-                    else
-                    {
-                        isValidName = true;
+                        Console.WriteLine(
+                            "Название не должно быть пустым.");
                     }
                 }
 
-                toys[i].Name = name;
-                toys[i].Price = Checked.ReadInt("Цена: ", 0, 
-                    1000000);
-                toys[i].MinAge = Checked.ReadInt("Минимальный" +
-                    " возраст: ", 0, 100);
-                toys[i].MaxAge = Checked.ReadInt
-                    ("Максимальный возраст: ", 0, 100);
+                toy.Name = name;
+                toy.Price = Checked.ReadInt(
+                    "Цена: ", 0, 1000000);
+                toy.MinAge = Checked.ReadInt(
+                    "Минимальный возраст: ", 0, 100);
+                toy.MaxAge = Checked.ReadInt(
+                    "Максимальный возраст: ", 0, 100);
 
-                while (toys[i].MinAge > toys[i].MaxAge)
+                while (toy.MinAge > toy.MaxAge)
                 {
-                    Console.WriteLine("Ошибка. Минимальный " +
-                        "возраст не может быть больше" +
-                        " максимального.");
-                    toys[i].MinAge = Checked.ReadInt("Введ" +
-                        "ите минимальный возраст заново: ", 
-                        0, 100);
+                    Console.WriteLine(
+                        "Минимальный возраст больше " +
+                        "максимального.");
+
+                    toy.MinAge = Checked.ReadInt(
+                        "Введите минимум заново: ", 0, 100);
                 }
+
+                toys[index] = toy;
+                index++;
             }
 
-            XmlSerializer serializer = new XmlSerializer
-                (typeof(Toy[]));
-            using (FileStream fs = new FileStream(xmlFile,
-                FileMode.Create))
+            SerializeToys(path, toys);
+
+            if (!IsFileAvailable(path))
             {
-                serializer.Serialize(fs, toys);
+                return;
             }
-            Console.WriteLine($"\nДанные сохранены в файл " +
-                $"{xmlFile}");
 
-            Toy[] loadedToys;
-            using (FileStream fs = new FileStream(xmlFile,
-                FileMode.Open))
-            {
-                loadedToys = (Toy[])serializer.Deserialize(fs);
-            }
-            Console.WriteLine("Данные успешно загружены из " +
-                "файла.");
-
+            Toy[] loadedToys = DeserializeToys(path);
             double sum = 0;
             int cubeCount = 0;
+            index = 0;
 
-            Console.WriteLine("\n Результат");
-            foreach (Toy t in loadedToys)
+            while (index < loadedToys.Length)
             {
-                if (t.Name.Equals("Кубики", StringComparison.
-                    OrdinalIgnoreCase))
+                Toy toy = loadedToys[index];
+
+                if (string.Equals(
+                    toy.Name, "Кубики",
+                    StringComparison.OrdinalIgnoreCase))
                 {
-                    sum += t.Price;
+                    sum += toy.Price;
                     cubeCount++;
-                    Console.WriteLine($"Найдены Кубики: " +
-                        $"цена {t.Price}, возраст от " +
-                        $"{t.MinAge} до {t.MaxAge} лет");
+
+                    Console.WriteLine(
+                        "Кубики: возраст от " +
+                        toy.MinAge + " до " +
+                        toy.MaxAge + ", цена " + toy.Price);
                 }
+
+                index++;
             }
 
             if (cubeCount > 0)
             {
-                double averagePrice = sum / cubeCount;
-                Console.WriteLine($"\nСредняя стоимость " +
-                    $"кубиков: {averagePrice:F2}");
+                Console.WriteLine(
+                    "Средняя цена кубиков: " +
+                    (sum / cubeCount).ToString("F2"));
             }
             else
             {
-                Console.WriteLine("\nКубики не найдены.");
+                Console.WriteLine("Кубики не найдены.");
+            }
+
+            _fileOpsCount++;
+        }
+
+        private static void FillTextFile(
+            string path, int count)
+        {
+            Random random = new Random();
+
+            using (StreamWriter writer = new StreamWriter(path))
+            {
+                int index = 0;
+
+                while (index < count)
+                {
+                    int number = random.Next(1, 101);
+                    writer.WriteLine(number);
+                    Console.WriteLine(number);
+                    index++;
+                }
             }
         }
 
-        private static void FillTextFileTask6(string fileName)
-        {
-            int choice = Checked.ReadInt("Заполнить файл 1 - " +
-                "случайными числами, 2 - вручную? ", 1, 2);
-            using (StreamWriter writer = new StreamWriter
-                (fileName))
-            {
-                if (choice == 1)
-                {
-                    Random rnd = new Random();
-                    int count = Checked.ReadInt("Сколько " +
-                        "чисел сгенерировать? ", 1, 100);
-                    for (int i = 0; i < count; i++)
-                    {
-                        writer.WriteLine(rnd.Next(1, 100));
-                    }
-                }
-                else
-                {
-                    int count = Checked.ReadInt("Сколько " +
-                        "чисел ввести? ", 1, 100);
-                    int i = 0;
-                    for (i = 0; i < count; i++)
-                    {
-                        int num = Checked.ReadInt($"Введите " +
-                            $"{i + 1}-е число: ");
-                        writer.WriteLine(num);
-                    }
-                }
-            }
-        }
-        
         public static void RunTask6()
         {
-            _fileOpsCount++;
-            string file1 = "input6.txt";
-            string file2 = "output6.txt";
+            string source = "input6.txt";
+            string result = "output6.txt";
 
-            FillTextFileTask6(file1);
+            int count = Checked.ReadInt(
+                "Количество чисел: ", 1, 100);
 
-            int k = Checked.ReadInt("Введите делитель k " +
-                "(не 0): ", 1, int.MaxValue);
-
-            string[] lines = File.ReadAllLines(file1);
-
-            Console.WriteLine("\nСодержимое исходного файла:");
-            int i = 0;
-            for ( i = 0; i < lines.Length; i++)
+            try
             {
-                Console.WriteLine(lines[i]);
+                FillTextFile(source, count);
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка записи файла.");
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+                return;
             }
 
-            Console.WriteLine($"\nРезультат деления на {k} " +
-                $"(записано в output6.txt):");
-            using (StreamWriter writer = new StreamWriter
-                (file2))
-            {
-                for (i = 0; i < lines.Length; i++)
-                {
-                    double val = double.Parse(lines[i]);
-                    double result = val / k;
-                    writer.WriteLine(Math.Round(result, 2));
+            int divisor = Checked.ReadInt(
+                "Введите делитель k: ", 1, int.MaxValue);
 
-                    Console.WriteLine(Math.Round(result, 2));
+            if (!IsFileAvailable(source))
+            {
+                return;
+            }
+
+            try
+            {
+                using (StreamReader reader =
+                    new StreamReader(source))
+                using (StreamWriter writer =
+                    new StreamWriter(result))
+                {
+                    string line = reader.ReadLine();
+
+                    while (line != null)
+                    {
+                        int number;
+
+                        if (int.TryParse(line, out number))
+                        {
+                            double value = 
+                                (double)number / divisor;
+                            writer.WriteLine(value);
+                        }
+                        else
+                        {
+                            Console.WriteLine(
+                                "Пропущена некорректная " +
+                                "строка.");
+                        }
+
+                        line = reader.ReadLine();
+                    }
                 }
+
+                _fileOpsCount++;
+                Console.WriteLine(
+                    "Результат сохранён в output6.txt.");
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка обработки файла.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
             }
         }
 
-        private static void FillTextFileTask7(string fileName)
+        private static void FillNumberLines(string path)
         {
-            int choice = Checked.ReadInt("Заполнить файл 1 - " +
-                "случайными числами, 2 - вручную? ", 1, 2);
-            using (StreamWriter writer = new StreamWriter(fileName))
+            int rows = Checked.ReadInt(
+                "Количество строк: ", 1, 10);
+
+            Random random = new Random();
+
+            using (StreamWriter writer = new StreamWriter(path))
             {
-                if (choice == 1)
+                int row = 0;
+
+                while (row < rows)
                 {
-                    Random rnd = new Random();
-                    int rows = Checked.ReadInt("Сколько строк" +
-                        " сгенерировать? ", 1, 10);
-                    int i = 0;
-                    int j = 0;
-                    int cols = 0;
-                    for ( i = 0; i < rows; i++)
+                    int count = Checked.ReadInt(
+                        "Количество чисел в строке: ", 1, 10);
+                    int column = 0;
+
+                    while (column < count)
                     {
-                        cols = Checked.ReadInt($"Сколько " +
-                            $"чисел в {i + 1}-й строке? ",
-                            1, 10);
-                        for ( j = 0; j < cols; j++)
+                        if (column > 0)
                         {
-                            writer.Write(rnd.Next(-50, 100) + 
-                                " ");
+                            writer.Write(" ");
                         }
-                        writer.WriteLine();
+
+                        writer.Write(random.Next(-50, 100));
+                        column++;
                     }
-                }
-                else
-                {
-                    int i = 0;
-                    int j = 0;
-                    int cols = 0;
-                    int rows = Checked.ReadInt("Сколько " +
-                        "строк ввести? ", 1, 10);
-                    for ( i = 0; i < rows; i++)
-                    {
-                        cols = Checked.ReadInt($"Сколько " +
-                            $"чисел в {i + 1}-й строке? ", 
-                            1, 10);
-                        for ( j = 0; j < cols; j++)
-                        {
-                            int num = Checked.ReadInt
-                                ($"Введите {j + 1}-е число" +
-                                $" в {i + 1}-й строке: ");
-                            writer.Write(num + " ");
-                        }
-                        writer.WriteLine();
-                    }
+
+                    writer.WriteLine();
+                    row++;
                 }
             }
         }
 
         public static void RunTask7()
         {
-            _fileOpsCount++;
-            string file = "input7.txt";
+            string path = "input7.txt";
 
-            FillTextFileTask7(file);
-
-            string[] lines = File.ReadAllLines(file);
-            Console.WriteLine("\nСодержимое исходного файла:");
-            for (int i = 0; i < lines.Length; i++)
+            try
             {
-                Console.WriteLine(lines[i]);
+                FillNumberLines(path);
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка записи файла.");
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+                return;
             }
 
-            int first = 0;
-            int max = int.MinValue;
-            bool isFirst = true;
-
-            for (int i = 0; i < lines.Length; i++)
+            if (!IsFileAvailable(path))
             {
-                string[] parts = lines[i].Split(' ', 
-                    StringSplitOptions.RemoveEmptyEntries);
-                for (int j = 0; j < parts.Length; j++)
+                return;
+            }
+
+            bool hasNumber = false;
+            int first = 0;
+            int maximum = int.MinValue;
+
+            try
+            {
+                using (StreamReader reader =
+                    new StreamReader(path))
                 {
-                    int num = int.Parse(parts[j]);
-                    if (isFirst)
+                    string line = reader.ReadLine();
+
+                    while (line != null)
                     {
-                        first = num;
-                        isFirst = false;
-                    }
-                    if (num > max)
-                    {
-                        max = num;
+                        string[] parts = line.Split(
+                            new char[] { ' ', '\t' },
+                            StringSplitOptions.
+                            RemoveEmptyEntries);
+
+                        int column = 0;
+
+                        while (column < parts.Length)
+                        {
+                            int number;
+
+                            if (int.TryParse(
+                                parts[column], out number))
+                            {
+                                if (!hasNumber)
+                                {
+                                    first = number;
+                                    hasNumber = true;
+                                }
+
+                                if (number > maximum)
+                                {
+                                    maximum = number;
+                                }
+                            }
+
+                            column++;
+                        }
+
+                        line = reader.ReadLine();
                     }
                 }
             }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка чтения файла.");
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+                return;
+            }
 
-            Console.WriteLine("\nРезультат");
-            Console.WriteLine($"Первый: {first}, " +
-                $"Максимальный: {max}, Сумма: {first + max}");
+            if (hasNumber)
+            {
+                Console.WriteLine("Первый элемент: " + first);
+                Console.WriteLine("Максимальный элемент: " + 
+                    maximum);
+                Console.WriteLine("Их сумма: " + ((long)first +
+                    maximum));
+                _fileOpsCount++;
+            }
+            else
+            {
+                Console.WriteLine("В файле нет чисел.");
+            }
         }
 
-        private static void FillTextFileTask8(string fileName)
+        private static void FillTextLines(string path)
         {
-            Console.WriteLine("Введите текст (каждое " +
-                "новое слово/предложение пишите с " +
-                "новой строки).");
-            Console.WriteLine("Чтобы закончить ввод, " +
-                "просто нажмите Enter на пустой строке:");
+            Console.WriteLine(
+                "Введите строки. " +
+                "Пустая строка завершает ввод.");
 
-            using (StreamWriter writer = new 
-                StreamWriter(fileName))
+            using (StreamWriter writer = new StreamWriter(path))
             {
-                bool isInputting = true;
-                while (isInputting)
+                bool reading = true;
+
+                while (reading)
                 {
-                    string? line = Console.ReadLine();
-                    if (string.IsNullOrWhiteSpace(line))
+                    string line = Console.ReadLine() ?? "";
+
+                    if (line.Length == 0)
                     {
-                        isInputting = false;
+                        reading = false;
                     }
                     else
                     {
@@ -399,37 +595,75 @@ namespace lab3
 
         public static void RunTask8()
         {
-            _fileOpsCount++;
-            string file1 = "input8.txt";
-            string file2 = "output8.txt";
+            string source = "input8.txt";
+            string result = "output8.txt";
 
-            FillTextFileTask8(file1);
-
-            string[] lines = File.ReadAllLines(file1);
-            Console.WriteLine("\nСодержимое исходного файла:");
-            for (int i = 0; i < lines.Length; i++)
+            try
             {
-                Console.WriteLine(lines[i]);
+                FillTextLines(source);
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка записи файла.");
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
+                return;
             }
 
-            Console.WriteLine("\nРезультат (записано в " +
-                "output8.txt)");
-            using (StreamWriter writer = new 
-                StreamWriter(file2))
+            if (!IsFileAvailable(source))
             {
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    string line = lines[i].Trim();
+                return;
+            }
 
-                    if ((line.Length > 0 && (line[0] == 'б' 
-                        || line[0] == 'Б')) ||
-                        (line.Length > 1 && (line[1] == 'б'
-                        || line[1] == 'Б')))
+            try
+            {
+                using (StreamReader reader =
+                    new StreamReader(source))
+                using (StreamWriter writer =
+                    new StreamWriter(result))
+                {
+                    string line = reader.ReadLine();
+
+                    while (line != null)
                     {
-                        writer.WriteLine(line);
-                        Console.WriteLine(line);
+                        string trimmed = line.Trim();
+
+                        if (trimmed.Length > 0)
+                        {
+                            bool firstIsБ =
+                                trimmed[0] == 'б' ||
+                                trimmed[0] == 'Б';
+
+                            bool secondIsБ =
+                                trimmed.Length > 1 &&
+                                (trimmed[1] == 'б' ||
+                                 trimmed[1] == 'Б');
+
+                            if (firstIsБ || secondIsБ)
+                            {
+                                writer.WriteLine(line);
+                                Console.WriteLine(line);
+                            }
+                        }
+
+                        line = reader.ReadLine();
                     }
                 }
+
+                _fileOpsCount++;
+                Console.WriteLine(
+                    "Результат сохранён в output8.txt.");
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Ошибка обработки файла.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Нет доступа к файлу.");
             }
         }
     }

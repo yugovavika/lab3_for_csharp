@@ -76,9 +76,9 @@ namespace lab3
                         allTasks.RunTask3();
                         FileTasks.RunAll();
 
-                        Console.WriteLine($"\nСоздано " +
-                            $"объектов MatrixTasks: " +
-                            $"{MatrixTasks.InstanceCount}");
+                        //Console.WriteLine($"\nСоздано " +
+                            //$"объектов MatrixTasks: " +
+                            //$"{MatrixTasks.InstanceCount}");
                         Console.WriteLine($"Выполнено " +
                             $"файловых операций: " +
                             $"{FileTasks.FileOpsCount}");
